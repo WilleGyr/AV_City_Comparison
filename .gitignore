@@ -1,0 +1,20 @@
+# AV2 raw data
+datasets/
+
+# Generated outputs
+*.csv
+*.db
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# OS / editor clutter
+.DS_Store
+Thumbs.db
+.vscode/

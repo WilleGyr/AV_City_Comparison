@@ -15,7 +15,7 @@ def create_table():
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS scenarios (
-        scenario_id INTEGER PRIMARY KEY,
+        scenario_id TEXT PRIMARY KEY,
         city TEXT NOT NULL,
         complexity_score REAL NOT NULL,
         complexity_label TEXT NOT NULL,
@@ -25,7 +25,7 @@ def create_table():
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS scenario_metrics (
-        scenario_id INTEGER PRIMARY KEY,
+        scenario_id TEXT PRIMARY KEY,
         vehicle_count INTEGER NOT NULL,
         pedestrian_count INTEGER NOT NULL,
         avg_vehicle_speed_mps REAL NOT NULL,
@@ -56,7 +56,7 @@ def add_scenario(scenario_id, city, complexity_score, complexity_label, source_d
     cursor = conn.cursor()
 
     cursor.execute("""
-    INSERT INTO scenarios (
+    INSERT OR REPLACE INTO scenarios (
         scenario_id,
         city,
         complexity_score,
@@ -70,15 +70,21 @@ def add_scenario(scenario_id, city, complexity_score, complexity_label, source_d
     conn.close()
 
 
-def add_scenario_metrics(scenario_id, vehicle_count, pedestrian_count,
-                         avg_vehicle_speed_mps, speed_std,
-                         interaction_count, diversity_count):
+def add_scenario_metrics(
+    scenario_id,
+    vehicle_count,
+    pedestrian_count,
+    avg_vehicle_speed_mps,
+    speed_std,
+    interaction_count,
+    diversity_count
+):
     """Insert one row into scenario_metrics."""
     conn = connect()
     cursor = conn.cursor()
 
     cursor.execute("""
-    INSERT INTO scenario_metrics (
+    INSERT OR REPLACE INTO scenario_metrics (
         scenario_id,
         vehicle_count,
         pedestrian_count,
@@ -102,14 +108,13 @@ def add_scenario_metrics(scenario_id, vehicle_count, pedestrian_count,
     conn.close()
 
 
-def add_city_summary(city, mean_complexity, mean_vehicle_count,
-                     mean_pedestrian_count, mean_speed):
+def add_city_summary(city, mean_complexity, mean_vehicle_count, mean_pedestrian_count, mean_speed):
     """Insert one row into city_summary."""
     conn = connect()
     cursor = conn.cursor()
 
     cursor.execute("""
-    INSERT INTO city_summary (
+    INSERT OR REPLACE INTO city_summary (
         city,
         mean_complexity,
         mean_vehicle_count,
