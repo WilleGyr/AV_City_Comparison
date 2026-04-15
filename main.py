@@ -1,4 +1,4 @@
-from import_csv_to_db import main
+from database import create_table, add_scenario, add_city_summary
 
 if __name__ == "__main__":
-    main()
+    create_table()

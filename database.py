@@ -16,23 +16,13 @@ def create_table():
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS scenarios (
         scenario_id TEXT PRIMARY KEY,
-        city TEXT NOT NULL,
+        city TEXT NOT NULL REFERENCES city_summary(city),
         complexity_score REAL NOT NULL,
-        complexity_label TEXT NOT NULL,
-        source_dataset TEXT NOT NULL
-    )
-    """)
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS scenario_metrics (
-        scenario_id TEXT PRIMARY KEY,
         vehicle_count INTEGER NOT NULL,
         pedestrian_count INTEGER NOT NULL,
         avg_vehicle_speed_mps REAL NOT NULL,
-        speed_std REAL NOT NULL,
         interaction_count INTEGER NOT NULL,
-        diversity_count INTEGER NOT NULL,
-        FOREIGN KEY (scenario_id) REFERENCES scenarios(scenario_id)
+        diversity_count INTEGER NOT NULL
     )
     """)
 
@@ -50,7 +40,7 @@ def create_table():
     conn.close()
 
 
-def add_scenario(scenario_id, city, complexity_score, complexity_label, source_dataset):
+def add_scenario(scenario_id, city, complexity_score, vehicle_count, pedestrian_count, avg_vehicle_speed_mps, interaction_count, diversity_count):
     """Insert one row into scenarios."""
     conn = connect()
     cursor = conn.cursor()
@@ -60,53 +50,17 @@ def add_scenario(scenario_id, city, complexity_score, complexity_label, source_d
         scenario_id,
         city,
         complexity_score,
-        complexity_label,
-        source_dataset
+        vehicle_count,
+        pedestrian_count,
+        avg_vehicle_speed_mps,
+        interaction_count,
+        diversity_count
     )
     VALUES (?, ?, ?, ?, ?)
-    """, (scenario_id, city, complexity_score, complexity_label, source_dataset))
+    """, (scenario_id, city, complexity_score, vehicle_count, pedestrian_count, avg_vehicle_speed_mps, interaction_count, diversity_count))
 
     conn.commit()
     conn.close()
-
-
-def add_scenario_metrics(
-    scenario_id,
-    vehicle_count,
-    pedestrian_count,
-    avg_vehicle_speed_mps,
-    speed_std,
-    interaction_count,
-    diversity_count
-):
-    """Insert one row into scenario_metrics."""
-    conn = connect()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-    INSERT OR REPLACE INTO scenario_metrics (
-        scenario_id,
-        vehicle_count,
-        pedestrian_count,
-        avg_vehicle_speed_mps,
-        speed_std,
-        interaction_count,
-        diversity_count
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, (
-        scenario_id,
-        vehicle_count,
-        pedestrian_count,
-        avg_vehicle_speed_mps,
-        speed_std,
-        interaction_count,
-        diversity_count
-    ))
-
-    conn.commit()
-    conn.close()
-
 
 def add_city_summary(city, mean_complexity, mean_vehicle_count, mean_pedestrian_count, mean_speed):
     """Insert one row into city_summary."""
