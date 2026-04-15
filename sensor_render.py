@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 import cv2
-import imageio.v2 as imageio
+import imageio
 import numpy as np
 import pandas as pd
 from scipy.spatial.transform import Rotation as R
