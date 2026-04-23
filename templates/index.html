@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AV City Comparison</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <div>
+        <h1>AV City Comparison</h1>
+        <p>Autonomous Vehicle Sensor Complexity Analyzer</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="grid">
+
+    <!-- ── Left panel: scenario selector + video ── -->
+    <section class="panel video-panel">
+      <h2>Scenario Viewer</h2>
+
+      <div class="form-group">
+        <label for="logSelect">Log</label>
+        <select id="logSelect"><option disabled>Loading logs…</option></select>
+      </div>
+
+      <div class="form-group">
+        <label for="cameraSelect">Camera</label>
+        <select id="cameraSelect"></select>
+      </div>
+
+      <div class="button-row">
+        <button id="renderBtn" class="btn-primary">▶ Render</button>
+        <button id="playBtn"   class="btn-secondary">Play</button>
+        <button id="stopBtn"   class="btn-secondary">Stop</button>
+      </div>
+
+      <div id="renderProgress" class="progress-log" hidden></div>
+
+      <div class="video-container">
+        <video id="videoPlayer" controls>
+          <p>Your browser does not support HTML5 video.</p>
+        </video>
+        <div id="videoPlaceholder" class="video-placeholder">
+          <span>Select a log and click <strong>Render</strong> to generate a video</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Middle panel: statistics ── -->
+    <section class="panel stats-panel">
+      <h2>Statistics</h2>
+
+      <div class="stat-card">
+        <div class="stat-label">City</div>
+        <div class="stat-value" id="statCity">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Camera</div>
+        <div class="stat-value small" id="statCamera">—</div>
+      </div>
+      <div class="stat-card highlight">
+        <div class="stat-label">Avg Complexity Score</div>
+        <div class="stat-value" id="statAvgComplexity">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Max Frame Complexity</div>
+        <div class="stat-value" id="statMaxComplexity">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Min Frame Complexity</div>
+        <div class="stat-value" id="statMinComplexity">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Processed Frames</div>
+        <div class="stat-value" id="statFrames">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Vehicles / Frame</div>
+        <div class="stat-value" id="statVehicles">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Pedestrians / Frame</div>
+        <div class="stat-value" id="statPedestrians">—</div>
+      </div>
+    </section>
+
+    <!-- ── Right panel: graph builder ── -->
+    <section class="panel graph-panel">
+      <h2>Graph Builder</h2>
+
+      <div class="form-group">
+        <label for="xAxisSelect">X Axis</label>
+        <select id="xAxisSelect">
+          <option value="city">City</option>
+          <option value="log_id">Log ID</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="yAxisSelect">Y Axis</label>
+        <select id="yAxisSelect">
+          <option value="avg_complexity">Avg Complexity Score</option>
+          <option value="max_complexity">Max Complexity Score</option>
+          <option value="vehicle_count">Avg Vehicles / Frame</option>
+          <option value="pedestrian_count">Avg Pedestrians / Frame</option>
+          <option value="frames">Processed Frames</option>
+        </select>
+      </div>
+
+      <button id="graphBtn" class="btn-primary">Generate Graph</button>
+
+      <div class="graph-container">
+        <img id="graphImg" src="" alt="Graph" hidden>
+        <div id="graphPlaceholder" class="placeholder-text">
+          Render one or more scenarios first, then generate a comparison graph.
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

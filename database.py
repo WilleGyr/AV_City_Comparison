@@ -56,7 +56,7 @@ def add_scenario(scenario_id, city, complexity_score, vehicle_count, pedestrian_
         interaction_count,
         diversity_count
     )
-    VALUES (?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     """, (scenario_id, city, complexity_score, vehicle_count, pedestrian_count, avg_vehicle_speed_mps, interaction_count, diversity_count))
 
     conn.commit()

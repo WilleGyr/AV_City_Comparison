@@ -3,6 +3,8 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -12,6 +14,36 @@ import imageio
 import numpy as np
 import pandas as pd
 from scipy.spatial.transform import Rotation as R
+
+
+# ---------------------------------------------------------------------------
+# Train-000 dataset location — override with env var AV2_TRAIN_DIR
+# ---------------------------------------------------------------------------
+_DEFAULT_TRAIN_DIR = Path("C:/Users/willi/Downloads/train-000/sensor/train")
+TRAIN_DIR: Path = Path(os.environ.get("AV2_TRAIN_DIR", str(_DEFAULT_TRAIN_DIR)))
+
+
+def get_city_from_log(log_dir: Path) -> str:
+    """Extract AV2 city code from a log's map directory filename (e.g. PIT, MIA, WDC)."""
+    map_dir = log_dir / "map"
+    if map_dir.exists():
+        for f in map_dir.iterdir():
+            m = re.search(r"____([A-Z]{2,5})[_.]", f.name)
+            if m:
+                return m.group(1)
+    return "UNKNOWN"
+
+
+def list_logs(train_dir: Optional[Path] = None) -> List[Dict]:
+    """Return a list of {id, path, city} dicts for every log in train_dir."""
+    d = train_dir or TRAIN_DIR
+    if not d.exists():
+        return []
+    return [
+        {"id": p.name, "path": str(p), "city": get_city_from_log(p)}
+        for p in sorted(d.iterdir())
+        if p.is_dir()
+    ]
 
 
 # ============================================================
@@ -101,6 +133,16 @@ LINE_COLORS = {
     "VEHICULAR_TRAILER": (0, 80, 255),
     "UNKNOWN": (255, 255, 255),
 }
+
+VEHICLE_CATEGORIES = frozenset({
+    "REGULAR_VEHICLE", "LARGE_VEHICLE", "BUS", "BOX_TRUCK", "TRUCK",
+    "TRAILER", "ARTICULATED_BUS", "SCHOOL_BUS", "VEHICULAR_TRAILER",
+})
+
+PEDESTRIAN_CATEGORIES = frozenset({
+    "PEDESTRIAN", "WHEELED_RIDER", "WHEELED_DEVICE", "WHEELCHAIR",
+    "STROLLER", "DOG",
+})
 
 # 3D cuboid edge connectivity for 8 corners.
 BOX_EDGES = [
@@ -536,18 +578,49 @@ def resolve_file(log_dir: Path, names: List[str]) -> Path:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Render AV2 Sensor Dataset camera-view complexity video.")
-    parser.add_argument("--log-dir", type=Path, required=True, help="Path to one AV2 sensor log directory.")
-    parser.add_argument("--camera", type=str, required=True, help="Camera name, e.g. ring_front_center.")
-    parser.add_argument("--output-video", type=Path, required=True, help="Output .mp4 path.")
-    parser.add_argument("--output-json", type=Path, required=True, help="Output summary .json path.")
-    parser.add_argument("--max-ts-delta-ms", type=float, default=30.0, help="Max timestamp mismatch for annotation/image pairing.")
+    parser.add_argument("--log-dir", type=str, default=None,
+                        help="Path to one AV2 sensor log directory, or a log UUID resolved against TRAIN_DIR.")
+    parser.add_argument("--camera", type=str, default="ring_front_center",
+                        help="Camera name, e.g. ring_front_center.")
+    parser.add_argument("--output-video", type=Path, default=None, help="Output .mp4 path.")
+    parser.add_argument("--output-json", type=Path, default=None, help="Output summary .json path.")
+    parser.add_argument("--max-ts-delta-ms", type=float, default=30.0,
+                        help="Max timestamp mismatch for annotation/image pairing.")
     parser.add_argument("--font-scale", type=float, default=0.45, help="Actor label font scale.")
     parser.add_argument("--skip-labels", action="store_true", help="Draw boxes only, no per-actor text.")
+    parser.add_argument("--list-logs", action="store_true",
+                        help="Print all available log IDs and cities from TRAIN_DIR, then exit.")
     args = parser.parse_args()
 
-    log_dir: Path = args.log_dir
+    if args.list_logs:
+        logs = list_logs()
+        if not logs:
+            print(f"No logs found in TRAIN_DIR: {TRAIN_DIR}")
+        for entry in logs:
+            print(f"{entry['city']}\t{entry['id']}")
+        return
+
+    if args.log_dir is None:
+        parser.error("--log-dir is required unless --list-logs is specified.")
+
+    # Accept either a full path or just a UUID resolved against TRAIN_DIR.
+    candidate = Path(args.log_dir)
+    if candidate.exists():
+        log_dir = candidate
+    else:
+        log_dir = TRAIN_DIR / args.log_dir
+        if not log_dir.exists():
+            raise FileNotFoundError(
+                f"Log directory not found: tried '{candidate}' and '{log_dir}'"
+            )
+
     camera_name: str = args.camera
     max_delta_ns = int(args.max_ts_delta_ms * 1e6)
+
+    if args.output_video is None:
+        args.output_video = Path(f"{log_dir.name}_{camera_name}.mp4")
+    if args.output_json is None:
+        args.output_json = Path(f"{log_dir.name}_{camera_name}.json")
 
     annotations_path = resolve_file(log_dir, ["annotations.feather"])
     intrinsics_path = resolve_file(log_dir, ["calibration/intrinsics.feather"])
@@ -577,6 +650,8 @@ def main() -> None:
 
     writer = None
     frame_scores: List[float] = []
+    frame_vehicle_counts: List[int] = []
+    frame_pedestrian_counts: List[int] = []
     processed_frames = 0
 
     try:
@@ -635,6 +710,8 @@ def main() -> None:
 
             frame_score = 0.0
             visible_actor_count = 0
+            frame_vehicles = 0
+            frame_peds = 0
 
             for _, row in frame_ann.iterrows():
                 category = str(row["category"])
@@ -658,6 +735,10 @@ def main() -> None:
                     continue
 
                 visible_actor_count += 1
+                if category in VEHICLE_CATEGORIES:
+                    frame_vehicles += 1
+                elif category in PEDESTRIAN_CATEGORIES:
+                    frame_peds += 1
 
                 score, reason = actor_score(row)
                 frame_score += score
@@ -666,6 +747,8 @@ def main() -> None:
                     draw_actor_label(img, uv, valid, reason[:110], color)
 
             frame_scores.append(frame_score)
+            frame_vehicle_counts.append(frame_vehicles)
+            frame_pedestrian_counts.append(frame_peds)
             running_avg = float(np.mean(frame_scores))
 
             overlay_score_panel(
@@ -687,11 +770,15 @@ def main() -> None:
 
     summary = {
         "log_dir": str(log_dir),
+        "log_id": log_dir.name,
+        "city": get_city_from_log(log_dir),
         "camera_name": camera_name,
         "processed_frames": processed_frames,
         "average_complexity_score": float(np.mean(frame_scores)) if frame_scores else 0.0,
         "max_frame_complexity": float(np.max(frame_scores)) if frame_scores else 0.0,
         "min_frame_complexity": float(np.min(frame_scores)) if frame_scores else 0.0,
+        "vehicle_count": float(np.mean(frame_vehicle_counts)) if frame_vehicle_counts else 0.0,
+        "pedestrian_count": float(np.mean(frame_pedestrian_counts)) if frame_pedestrian_counts else 0.0,
         "frame_scores": [float(x) for x in frame_scores],
         "notes": {
             "score_definition": "Per-frame score is the sum of per-actor heuristic scores over visible projected cuboids.",
@@ -719,11 +806,14 @@ if __name__ == "__main__":
 #
 # pip install numpy pandas scipy opencv-python imageio imageio-ffmpeg pyarrow
 #
-# python av2_sensor_complexity.py \
+# python sensor_render.py \
 #   --log-dir /path/to/av2_sensor_log \
 #   --camera ring_front_center \
 #   --output-video ./ring_front_center_complexity.mp4 \
 #   --output-json ./ring_front_center_complexity.json
+#
+# List all logs:
+#   python sensor_render.py --list-logs
 #
 # ============================================================
 # Notes for adapting this to your local AV2 copy
