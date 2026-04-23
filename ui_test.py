@@ -6,6 +6,7 @@ from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtCore import QUrl
 from PyQt5 import uic
+from graph_builder import GraphBuilder
 
 def on_render_pressed(selection):
     print(f"render button pressed {selection}")
@@ -37,9 +38,12 @@ class MainWindow(QMainWindow):
         video_path = os.path.abspath("output.mp4")
         self.player.setMedia(QMediaContent(QUrl.fromLocalFile(video_path)))
 
+        self.graph_builder = GraphBuilder(self.xAxisCombo, self.yAxisCombo, self.graphDisplay)
+
         self.playButton.clicked.connect(self.player.play)
         self.stopButton.clicked.connect(self.player.stop)
         self.pushButton.clicked.connect(self.on_render)
+        self.graphButton.clicked.connect(self.graph_builder.build_graph)
         self.quitButton.clicked.connect(app.quit)
 
     def on_render(self):
