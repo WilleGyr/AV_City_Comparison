@@ -1,5 +1,6 @@
 import sys
 import os
+from pathlib import Path
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
@@ -18,6 +19,17 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(self.videoFrame)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.video_widget)
+
+        scenario_dir = Path("scenarios")
+
+        files = [
+            file.stem
+            for file in scenario_dir.iterdir()
+            if file.is_file() and file.suffix == ".txt"
+        ]
+
+        self.comboBox.clear()
+        self.comboBox.addItems(sorted(files))
 
         self.player = QMediaPlayer(self)
         self.player.setVideoOutput(self.video_widget)
