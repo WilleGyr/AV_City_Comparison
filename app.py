@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from sensor_render import TRAIN_DIR, get_city_from_log, list_logs
 
 OUTPUT_DIR = Path(__file__).parent / "static" / "output"
+SCENARIO_DATA_FILE = Path(__file__).parent / "static" / "data" / "scenario_data.json"
 
 app = Flask(__name__)
 
@@ -22,6 +23,14 @@ app = Flask(__name__)
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+def _load_scenario_data() -> list[dict]:
+    """Load pre-generated scenario data from extract_data.py output."""
+    if SCENARIO_DATA_FILE.exists():
+        with open(SCENARIO_DATA_FILE) as f:
+            return json.load(f)
+    return []
+
 
 def _rendered_rows() -> list[dict]:
     rows = []
@@ -33,14 +42,26 @@ def _rendered_rows() -> list[dict]:
                     data = json.load(f)
                 rows.append({
                     "log_id": d.name,
-                    "city": get_city_from_log(TRAIN_DIR / d.name),
+                    "city": data.get("city") or get_city_from_log(TRAIN_DIR / d.name),
+                    "weather": "Unknown",
                     "avg_complexity": data.get("average_complexity_score", 0),
                     "max_complexity": data.get("max_frame_complexity", 0),
-                    "frames": data.get("processed_frames", 0),
+                    "min_complexity": data.get("min_frame_complexity", 0),
+                    "complexity_std": 0,
+                    "num_frames": data.get("processed_frames", 0),
                     "vehicle_count": data.get("vehicle_count", 0),
                     "pedestrian_count": data.get("pedestrian_count", 0),
+                    "actor_density": 0,
+                    "avg_object_distance": 0,
+                    "num_unique_categories": 0,
                 })
     return rows
+
+
+def _graph_data() -> list[dict]:
+    """Return scenario data: pre-generated JSON if available, else rendered summaries."""
+    data = _load_scenario_data()
+    return data if data else _rendered_rows()
 
 
 # ---------------------------------------------------------------------------
@@ -88,6 +109,7 @@ def api_render(log_id: str):
             "--camera", camera,
             "--output-video", str(out_video),
             "--output-json", str(out_json),
+            "--skip-labels",
         ]
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         for line in proc.stdout:
@@ -121,12 +143,17 @@ def api_rendered_logs():
     return jsonify(_rendered_rows())
 
 
+@app.route("/api/scenario-data")
+def api_scenario_data():
+    return jsonify(_load_scenario_data())
+
+
 @app.route("/api/graph")
 def api_graph():
     x_key = request.args.get("x", "city")
     y_key = request.args.get("y", "avg_complexity")
 
-    rows = _rendered_rows()
+    rows = _graph_data()
 
     groups: dict[str, list[float]] = {}
     for row in rows:
@@ -143,31 +170,55 @@ def api_graph():
     y_labels = {
         "avg_complexity": "Avg Complexity Score",
         "max_complexity": "Max Complexity Score",
-        "frames": "Processed Frames",
+        "complexity_std": "Complexity Variability (Std Dev)",
         "vehicle_count": "Avg Vehicles / Frame",
         "pedestrian_count": "Avg Pedestrians / Frame",
+        "cyclist_count": "Avg Cyclists / Frame",
+        "actor_density": "Avg Total Actors / Frame",
+        "close_object_count": "Avg Close-Range Objects (<10 m)",
+        "avg_object_distance": "Avg Object Distance (m)",
+        "avg_object_size": "Avg Object Size (m³)",
+        "lidar_density": "Avg LiDAR Points / Object",
+        "num_unique_categories": "Category Diversity",
+        "num_frames": "Number of Frames",
     }
-    x_labels = {"city": "City", "log_id": "Log ID"}
+    x_labels = {
+        "city": "City",
+        "time_of_day": "Time of Day",
+        "log_id": "Log ID",
+    }
 
     plt.style.use("dark_background")
-    fig, ax = plt.subplots(figsize=(5.8, 5.2))
-    fig.patch.set_facecolor("#252525")
-    ax.set_facecolor("#1e1e1e")
-    ax.bar(labels, values, color="#f5c518", edgecolor="#c9a014", width=0.6)
-    ax.set_xlabel(x_labels.get(x_key, x_key), color="#f0f0f0", fontsize=11)
-    ax.set_ylabel(y_labels.get(y_key, y_key), color="#f0f0f0", fontsize=11)
+    fig, ax = plt.subplots(figsize=(8.0, 3.2))
+    fig.patch.set_facecolor("#1a1a2e")
+    ax.set_facecolor("#12121f")
+
+    bars = ax.bar(labels, values, color="#f5c518", edgecolor="#c9a014", width=0.55)
+
+    for bar, val in zip(bars, values):
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + max(values) * 0.02,
+            f"{val:.1f}",
+            ha="center", va="bottom",
+            color="#f0f0f0", fontsize=9,
+        )
+
+    ax.set_xlabel(x_labels.get(x_key, x_key), color="#8080b0", fontsize=10)
+    ax.set_ylabel(y_labels.get(y_key, y_key), color="#8080b0", fontsize=10)
     ax.set_title(
         f"{y_labels.get(y_key, y_key)} by {x_labels.get(x_key, x_key)}",
-        color="#f5c518", fontsize=13, fontweight="bold", pad=12,
+        color="#f5c518", fontsize=12, fontweight="bold", pad=10,
     )
-    ax.tick_params(colors="#f0f0f0", labelsize=10)
+    ax.tick_params(colors="#a0a0c0", labelsize=9)
     for spine in ax.spines.values():
-        spine.set_color("#3a3a3a")
-    plt.xticks(rotation=15, ha="right")
-    plt.tight_layout(pad=1.5)
+        spine.set_color("#2e2e50")
+    ax.set_ylim(bottom=0, top=max(values) * 1.18 if values else 1)
+    plt.xticks(rotation=20, ha="right")
+    plt.tight_layout(pad=1.2)
 
     buf = io.BytesIO()
-    fig.savefig(buf, format="png", dpi=100, facecolor=fig.get_facecolor())
+    fig.savefig(buf, format="png", dpi=110, facecolor=fig.get_facecolor())
     plt.close(fig)
     buf.seek(0)
     return send_file(buf, mimetype="image/png")
