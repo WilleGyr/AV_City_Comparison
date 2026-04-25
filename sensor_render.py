@@ -19,7 +19,7 @@ from scipy.spatial.transform import Rotation as R
 # ---------------------------------------------------------------------------
 # Train-000 dataset location — override with env var AV2_TRAIN_DIR
 # ---------------------------------------------------------------------------
-_DEFAULT_TRAIN_DIR = Path("C:/Users/willi/Downloads/train-000/sensor/train")
+_DEFAULT_TRAIN_DIR = Path("train")
 TRAIN_DIR: Path = Path(os.environ.get("AV2_TRAIN_DIR", str(_DEFAULT_TRAIN_DIR)))
 
 
