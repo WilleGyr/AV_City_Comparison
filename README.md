@@ -158,43 +158,64 @@ The `train/` directory is git-ignored — your dataset never gets committed.
 
 ## How It Works
 
-```mermaid
-flowchart LR
-  A[AV2 log dir] --> B[sensor_render.py]
-  B --> C[Load annotations + calibration + poses]
-  C --> D[Project 3D cuboids → 2D pixels]
-  D --> E[Score frame:<br/>category × distance × size × LiDAR]
-  E --> F[(MP4 + summary.json)]
-  A --> G[extract_data.py]
-  G --> H[Aggregate per-log metrics]
-  H --> I[(scenario_data.json)]
-  F --> J[Flask /api/stats]
-  I --> K[Flask /api/graph<br/>Matplotlib]
-  J --> L[Web UI]
-  K --> L
+Two pipelines feed one Flask app — a **per-log render** that produces an annotated MP4,
+and a **bulk extractor** that aggregates every log into a single comparison dataset.
+
+### The complexity score
+
+Every actor in every frame contributes to that frame's score. Frame totals are summed
+from per-actor contributions:
+
+```
+actor_score = category_weight × distance_falloff × volume_factor × lidar_density_factor
+frame_score = Σ actor_score   (over every cuboid visible at that timestamp)
 ```
 
-The video renderer (`sensor_render.py`):
+| Term | Source | Intuition |
+|---|---|---|
+| `category_weight` | `CATEGORY_WEIGHTS` in [`sensor_render.py`](sensor_render.py) | A bus matters more than a sign. |
+| `distance_falloff` | euclidean distance from ego in metres | Close actors dominate; far ones decay. |
+| `volume_factor` | `length × width × height` | Bigger boxes = more presence. |
+| `lidar_density_factor` | `num_interior_pts` per cuboid | High point counts mean the actor is well-resolved. |
 
-1. **Load** `annotations.feather`, `calibration/*.feather`, `city_SE3_egovehicle.feather`
-   for the chosen log.
-2. **For each timestamp**, look up the matching camera image and the cuboids visible in
-   that frame.
-3. **Project** every 3D cuboid into the 2D image plane using the camera intrinsics +
-   ego→sensor extrinsics.
-4. **Draw** the 8 box edges and a short text label per actor.
-5. **Score the frame** — sum per-actor contributions:
-   `category_weight × distance_falloff × volume_factor × lidar_density_factor`.
-6. **Write** the annotated `video.mp4` (via `imageio[ffmpeg]`) and a `summary.json` with
-   per-frame scores, the average, and aggregate counts.
+Tweak the weights, re-run the bulk extractor, and the graph builder picks up the new
+numbers immediately.
 
-The bulk extractor (`extract_data.py`) does steps 1, 2, and 5 only — no images, no
-projection, no MP4 — across every log in `AV2_TRAIN_DIR`, then dumps one row per log to
-`static/data/scenario_data.json`.
+### Render pipeline — one log → one MP4
 
-The Flask app (`app.py`) serves the SPA, streams render subprocess output as SSE, and
-renders graphs from `scenario_data.json` (or, if absent, falls back to whatever logs you
-have already rendered).
+```mermaid
+flowchart LR
+  A[AV2 log dir] --> B[Load feather:<br/>annotations + calibration + poses]
+  B --> C[For each timestamp:<br/>match image + cuboids]
+  C --> D[Project 3D cuboids → 2D pixels]
+  D --> E[Draw boxes + labels<br/>+ score frame]
+  E --> F[(video.mp4)]
+  E --> G[(summary.json)]
+```
+
+[`sensor_render.py`](sensor_render.py) loads the feather files for one log, walks each
+timestamp, projects every 3D cuboid into the chosen camera using the intrinsics +
+ego→sensor extrinsics, draws the 8 box edges plus a short label, scores the frame, and
+streams everything to disk via `imageio[ffmpeg]`.
+
+### Compare pipeline — every log → one chart
+
+```mermaid
+flowchart LR
+  A[AV2 train dir] --> B[Walk every log]
+  B --> C[Load annotations only<br/>no images, no projection]
+  C --> D[Aggregate per-log metrics<br/>+ city + time of day bin]
+  D --> E[(scenario_data.json)]
+  E --> F[Flask /api/graph]
+  F --> G[Matplotlib bar chart]
+```
+
+[`extract_data.py`](extract_data.py) skips the image and projection work — it only needs
+`annotations.feather` to score frames — and writes one row per log to
+[`static/data/scenario_data.json`](static/data/scenario_data.json). The Flask app
+([`app.py`](app.py)) serves the SPA, streams render subprocess output as Server-Sent
+Events, and renders comparison graphs on demand. If `scenario_data.json` is missing it
+falls back to whatever logs you've already rendered.
 
 ---
 
