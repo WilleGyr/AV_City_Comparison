@@ -602,6 +602,8 @@ def main(log_dir: Path, camera_name: str, output_video: Path, output_json: Path,
     ann_ts = np.sort(annotations["timestamp_ns"].unique().astype(np.int64))
     pose_ts = np.array(sorted(poses.keys()), dtype=np.int64)
 
+    ann_by_ts = {int(ts): df for ts, df in annotations.groupby("timestamp_ns")}
+
     output_video.parent.mkdir(parents=True, exist_ok=True)
     output_json.parent.mkdir(parents=True, exist_ok=True)
 
@@ -632,6 +634,7 @@ def main(log_dir: Path, camera_name: str, output_video: Path, output_json: Path,
                     codec="libx264",
                     quality=8,
                     ffmpeg_log_level="error",
+                    output_params=["-preset", "ultrafast"],
                 )
 
             if ts_ann is None or ts_pose is None:
@@ -663,7 +666,9 @@ def main(log_dir: Path, camera_name: str, output_video: Path, output_json: Path,
             # so pose is not needed unless you compute temporal tracking in world coords.
             _pose = poses[ts_pose]
 
-            frame_ann = annotations[annotations["timestamp_ns"] == ts_ann]
+            frame_ann = ann_by_ts.get(int(ts_ann))
+            if frame_ann is None:
+                continue
 
             frame_score = 0.0
             visible_actor_count = 0
