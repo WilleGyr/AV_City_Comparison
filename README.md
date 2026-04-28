@@ -261,9 +261,6 @@ falls back to whatever logs you've already rendered.
 ├── app.py                          # Flask server: routes, SSE, graph endpoint
 ├── sensor_render.py                # AV2 → annotated MP4 + summary.json (per-log)
 ├── extract_data.py                 # bulk per-log metrics → scenario_data.json
-├── graph_builder.py                # standalone Matplotlib helper (legacy)
-├── ui_test.py                      # PyQt prototype (legacy)
-├── Main.ui                         # Qt Designer file (legacy)
 ├── templates/
 │   └── index.html                  # single-page layout
 ├── static/
