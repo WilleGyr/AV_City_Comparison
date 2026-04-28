@@ -110,10 +110,18 @@ header h1 {
 /* ── Main grid ── */
 main.grid {
   display: grid;
-  grid-template-columns: 1.45fr 0.68fr 1fr;
+  grid-template-columns: 1.15fr 1.35fr;
   gap: 12px;
   padding: 12px;
   height: calc(100vh - var(--header-h));
+  overflow: hidden;
+}
+
+.right-column {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 12px;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -303,19 +311,20 @@ button:disabled {
 }
 
 /* ── Stats ── */
+.stats-panel {
+  flex-shrink: 0;
+}
+
 .stats-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
-  overflow-y: auto;
-  flex: 1;
-  min-height: 0;
   align-content: start;
 }
 
-.stats-grid::-webkit-scrollbar { width: 4px; }
-.stats-grid::-webkit-scrollbar-track { background: transparent; }
-.stats-grid::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+.stat-camera {
+  grid-column: 1 / -1;
+}
 
 .stat-card {
   background: var(--surface2);
@@ -329,13 +338,10 @@ button:disabled {
   border-color: var(--border-strong);
 }
 
-.stat-card.span2 {
-  grid-column: 1 / -1;
-}
-
 .stat-card.highlight {
-  background: var(--surface3);
-  border-color: var(--border-strong);
+  background: linear-gradient(135deg, var(--surface3), var(--surface2));
+  border-color: var(--accent-glow);
+  box-shadow: inset 0 0 0 1px var(--accent-glow);
 }
 
 .stat-label {
@@ -388,20 +394,22 @@ button:disabled {
   border-radius: var(--radius-sm);
   overflow: hidden;
   min-height: 0;
-  background: var(--surface2);
+  background:
+    radial-gradient(ellipse at top right, rgba(165, 180, 252, 0.06), transparent 60%),
+    var(--surface2);
   position: relative;
+  padding: 12px;
 }
 
-#graphImg {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+#graphCanvas {
+  width: 100% !important;
+  height: 100% !important;
   display: block;
   opacity: 0;
   transition: opacity 0.3s ease;
 }
 
-#graphImg.loaded {
+#graphCanvas.loaded {
   opacity: 1;
 }
 
@@ -437,14 +445,16 @@ button:disabled {
 @media (max-width: 1100px) {
   html, body { overflow: auto; height: auto; }
   main.grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     height: auto;
   }
-  .video-panel { grid-column: 1 / -1; }
+  .right-column {
+    grid-template-rows: auto auto;
+  }
   .video-container { min-height: 300px; }
+  .graph-container { min-height: 320px; }
 }
 
 @media (max-width: 700px) {
-  main.grid { grid-template-columns: 1fr; }
-  .video-panel { grid-column: auto; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
 }

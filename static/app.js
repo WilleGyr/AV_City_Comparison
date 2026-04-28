@@ -10,7 +10,7 @@ const videoPlayer      = document.getElementById("videoPlayer");
 const videoPlaceholder = document.getElementById("videoPlaceholder");
 const renderProgress   = document.getElementById("renderProgress");
 const graphBtn         = document.getElementById("graphBtn");
-const graphImg         = document.getElementById("graphImg");
+const graphCanvas      = document.getElementById("graphCanvas");
 const graphPlaceholder = document.getElementById("graphPlaceholder");
 const dataSourceBadge  = document.getElementById("dataSourceBadge");
 
@@ -150,29 +150,140 @@ async function loadStats(logId, camera) {
 }
 
 // ── Graph ──────────────────────────────────────────────────────────────────
-graphBtn.addEventListener("click", () => {
+const PALETTE = [
+  "#a5b4fc", "#4ade80", "#fb923c", "#f0abfc",
+  "#2dd4bf", "#fde68a", "#f87171", "#60a5fa",
+];
+
+function paletteFor(n) {
+  const colors = [];
+  for (let i = 0; i < n; i++) colors.push(PALETTE[i % PALETTE.length]);
+  return colors;
+}
+
+function hexToRgba(hex, alpha) {
+  const v = hex.replace("#", "");
+  const r = parseInt(v.slice(0, 2), 16);
+  const g = parseInt(v.slice(2, 4), 16);
+  const b = parseInt(v.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+let chartInstance = null;
+
+function showGraphError(msg) {
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+  graphCanvas.setAttribute("hidden", "");
+  graphCanvas.classList.remove("loaded");
+  graphPlaceholder.style.display = "flex";
+  graphPlaceholder.innerHTML = `
+    <div class="placeholder-icon small">⚠</div>
+    ${msg}
+  `;
+}
+
+function renderChart(payload) {
+  const { labels, values, counts, x_label, y_label, title } = payload;
+
+  if (!labels || labels.length === 0) {
+    showGraphError("No data yet — run <code>extract_data.py</code> or render a scenario first.");
+    return;
+  }
+
+  const colors = paletteFor(labels.length);
+  const bgColors = colors.map(c => hexToRgba(c, 0.55));
+  const borderColors = colors;
+
+  graphPlaceholder.style.display = "none";
+  graphCanvas.removeAttribute("hidden");
+
+  if (chartInstance) chartInstance.destroy();
+
+  chartInstance = new Chart(graphCanvas, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: y_label,
+        data: values,
+        backgroundColor: bgColors,
+        borderColor: borderColors,
+        borderWidth: 1.5,
+        borderRadius: 6,
+        hoverBackgroundColor: colors,
+        hoverBorderColor: "#ffffff",
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 500, easing: "easeOutQuart" },
+      plugins: {
+        legend: { display: false },
+        title: {
+          display: true,
+          text: title,
+          color: "#a5b4fc",
+          font: { size: 13, weight: "600", family: "ui-sans-serif, Inter, sans-serif" },
+          padding: { top: 4, bottom: 12 },
+        },
+        tooltip: {
+          backgroundColor: "rgba(28, 28, 33, 0.96)",
+          borderColor: "rgba(165, 180, 252, 0.4)",
+          borderWidth: 1,
+          titleColor: "#f4f4f5",
+          bodyColor: "#c4c4cc",
+          padding: 10,
+          cornerRadius: 6,
+          displayColors: true,
+          boxPadding: 4,
+          callbacks: {
+            label: (ctx) => {
+              const v = ctx.parsed.y;
+              const n = counts ? counts[ctx.dataIndex] : null;
+              const formatted = Number.isInteger(v) ? v : v.toFixed(2);
+              const suffix = n != null ? `   (n=${n})` : "";
+              return `${y_label}: ${formatted}${suffix}`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          title: { display: true, text: x_label, color: "#8a8a96", font: { size: 11 } },
+          ticks: { color: "#c4c4cc", font: { size: 11 } },
+          grid: { display: false },
+          border: { color: "rgba(255, 255, 255, 0.10)" },
+        },
+        y: {
+          title: { display: true, text: y_label, color: "#8a8a96", font: { size: 11 } },
+          ticks: { color: "#c4c4cc", font: { size: 11 } },
+          grid: { color: "rgba(255, 255, 255, 0.06)" },
+          border: { color: "rgba(255, 255, 255, 0.10)" },
+          beginAtZero: true,
+        },
+      },
+    },
+  });
+
+  requestAnimationFrame(() => graphCanvas.classList.add("loaded"));
+}
+
+graphBtn.addEventListener("click", async () => {
   const x = document.getElementById("xAxisSelect").value;
   const y = document.getElementById("yAxisSelect").value;
   const url = `/api/graph?x=${x}&y=${y}&t=${Date.now()}`;
 
-  graphImg.classList.remove("loaded");
-  graphImg.removeAttribute("hidden");
-  graphPlaceholder.style.display = "none";
+  graphCanvas.classList.remove("loaded");
 
-  const img = new Image();
-  img.onload = () => {
-    graphImg.src = img.src;
-    graphImg.classList.add("loaded");
-  };
-  img.onerror = () => {
-    graphImg.setAttribute("hidden", "");
-    graphPlaceholder.style.display = "flex";
-    graphPlaceholder.innerHTML = `
-      <div class="placeholder-icon small">⚠</div>
-      No data yet — run <code>extract_data.py</code> or render a scenario first.
-    `;
-  };
-  img.src = url;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    renderChart(data);
+  } catch (_) {
+    showGraphError("No data yet — run <code>extract_data.py</code> or render a scenario first.");
+  }
 });
 
 // ── Init ──────────────────────────────────────────────────────────────────────

@@ -1,15 +1,11 @@
 from __future__ import annotations
 
-import io
 import json
 import os
 import sys
 from pathlib import Path
 
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-from flask import Flask, Response, jsonify, render_template, request, send_file, stream_with_context
+from flask import Flask, Response, jsonify, render_template, request, stream_with_context
 
 sys.path.insert(0, str(Path(__file__).parent))
 from sensor_render import TRAIN_DIR, get_city_from_log, list_logs
@@ -164,8 +160,9 @@ def api_graph():
             continue
         groups.setdefault(key, []).append(val)
 
-    labels = list(groups.keys()) or ["No data"]
-    values = [sum(v) / len(v) if v else 0 for v in groups.values()] or [0]
+    labels = list(groups.keys())
+    values = [sum(v) / len(v) for v in groups.values()]
+    counts = [len(v) for v in groups.values()]
 
     y_labels = {
         "avg_complexity": "Avg Complexity Score",
@@ -188,40 +185,17 @@ def api_graph():
         "log_id": "Log ID",
     }
 
-    plt.style.use("dark_background")
-    fig, ax = plt.subplots(figsize=(8.0, 3.2))
-    fig.patch.set_facecolor("#1a1a2e")
-    ax.set_facecolor("#12121f")
+    x_label = x_labels.get(x_key, x_key)
+    y_label = y_labels.get(y_key, y_key)
 
-    bars = ax.bar(labels, values, color="#f5c518", edgecolor="#c9a014", width=0.55)
-
-    for bar, val in zip(bars, values):
-        ax.text(
-            bar.get_x() + bar.get_width() / 2,
-            bar.get_height() + max(values) * 0.02,
-            f"{val:.1f}",
-            ha="center", va="bottom",
-            color="#f0f0f0", fontsize=9,
-        )
-
-    ax.set_xlabel(x_labels.get(x_key, x_key), color="#8080b0", fontsize=10)
-    ax.set_ylabel(y_labels.get(y_key, y_key), color="#8080b0", fontsize=10)
-    ax.set_title(
-        f"{y_labels.get(y_key, y_key)} by {x_labels.get(x_key, x_key)}",
-        color="#f5c518", fontsize=12, fontweight="bold", pad=10,
-    )
-    ax.tick_params(colors="#a0a0c0", labelsize=9)
-    for spine in ax.spines.values():
-        spine.set_color("#2e2e50")
-    ax.set_ylim(bottom=0, top=max(values) * 1.18 if values else 1)
-    plt.xticks(rotation=20, ha="right")
-    plt.tight_layout(pad=1.2)
-
-    buf = io.BytesIO()
-    fig.savefig(buf, format="png", dpi=110, facecolor=fig.get_facecolor())
-    plt.close(fig)
-    buf.seek(0)
-    return send_file(buf, mimetype="image/png")
+    return jsonify({
+        "labels": labels,
+        "values": values,
+        "counts": counts,
+        "x_label": x_label,
+        "y_label": y_label,
+        "title": f"{y_label} by {x_label}",
+    })
 
 
 if __name__ == "__main__":

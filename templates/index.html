@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AV City Comparison</title>
   <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -23,6 +24,7 @@
 
     <!-- ── Left: scenario selector + video ── -->
     <section class="panel video-panel">
+
       <h2 class="panel-title">Scenario Viewer</h2>
 
       <div class="controls-row">
@@ -53,87 +55,92 @@
       </div>
     </section>
 
-    <!-- ── Middle: statistics ── -->
-    <section class="panel stats-panel">
-      <h2 class="panel-title">Statistics</h2>
+    <!-- ── Right: stats stacked over graph ── -->
+    <div class="right-column">
 
-      <div class="stats-grid">
-        <div class="stat-card span2 highlight">
-          <div class="stat-label">Avg Complexity Score</div>
-          <div class="stat-value" id="statAvgComplexity">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">City</div>
-          <div class="stat-value accent" id="statCity">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Frames</div>
-          <div class="stat-value" id="statFrames">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Max Complexity</div>
-          <div class="stat-value sm" id="statMaxComplexity">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Min Complexity</div>
-          <div class="stat-value sm" id="statMinComplexity">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Avg Vehicles / Frame</div>
-          <div class="stat-value sm" id="statVehicles">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Avg Peds / Frame</div>
-          <div class="stat-value sm" id="statPedestrians">—</div>
-        </div>
-        <div class="stat-card span2">
-          <div class="stat-label">Camera</div>
-          <div class="stat-value xs" id="statCamera">—</div>
-        </div>
-      </div>
-    </section>
+      <!-- ── Top: statistics ── -->
+      <section class="panel stats-panel">
+        <h2 class="panel-title">Statistics</h2>
 
-    <!-- ── Right: graph builder ── -->
-    <section class="panel graph-panel">
-      <h2 class="panel-title">Graph Builder</h2>
+        <div class="stats-grid">
+          <div class="stat-card highlight">
+            <div class="stat-label">Avg Complexity Score</div>
+            <div class="stat-value" id="statAvgComplexity">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">City</div>
+            <div class="stat-value accent" id="statCity">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Frames</div>
+            <div class="stat-value" id="statFrames">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Max Complexity</div>
+            <div class="stat-value sm" id="statMaxComplexity">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Min Complexity</div>
+            <div class="stat-value sm" id="statMinComplexity">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Avg Vehicles / Frame</div>
+            <div class="stat-value sm" id="statVehicles">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Avg Peds / Frame</div>
+            <div class="stat-value sm" id="statPedestrians">—</div>
+          </div>
+          <div class="stat-card stat-camera">
+            <div class="stat-label">Camera</div>
+            <div class="stat-value xs" id="statCamera">—</div>
+          </div>
+        </div>
+      </section>
 
-      <div class="graph-controls">
-        <div class="form-group">
-          <label for="xAxisSelect">X Axis</label>
-          <select id="xAxisSelect">
-            <option value="city">City</option>
-            <option value="time_of_day">Time of Day</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="yAxisSelect">Y Axis</label>
-          <select id="yAxisSelect">
-            <option value="avg_complexity">Avg Complexity Score</option>
-            <option value="max_complexity">Max Complexity Score</option>
-            <option value="complexity_std">Complexity Variability</option>
-            <option value="vehicle_count">Avg Vehicles / Frame</option>
-            <option value="pedestrian_count">Avg Pedestrians / Frame</option>
-            <option value="cyclist_count">Avg Cyclists / Frame</option>
-            <option value="actor_density">Total Actor Density</option>
-            <option value="close_object_count">Close-Range Objects (&lt;10 m)</option>
-            <option value="avg_object_distance">Avg Object Distance (m)</option>
-            <option value="avg_object_size">Avg Object Size (m³)</option>
-            <option value="lidar_density">LiDAR Points / Object</option>
-            <option value="num_unique_categories">Category Diversity</option>
-          </select>
-        </div>
-        <button id="graphBtn" class="btn-primary graph-btn">Generate</button>
-      </div>
+      <!-- ── Bottom: graph builder ── -->
+      <section class="panel graph-panel">
+        <h2 class="panel-title">Graph Builder</h2>
 
-      <div class="graph-container">
-        <img id="graphImg" src="" alt="Graph" hidden>
-        <div id="graphPlaceholder" class="placeholder-text">
-          <div class="placeholder-icon small">📊</div>
-          Run <code>extract_data.py</code> once to generate graph data from all scenarios,
-          or render a scenario first.
+        <div class="graph-controls">
+          <div class="form-group">
+            <label for="xAxisSelect">X Axis</label>
+            <select id="xAxisSelect">
+              <option value="city">City</option>
+              <option value="time_of_day">Time of Day</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="yAxisSelect">Y Axis</label>
+            <select id="yAxisSelect">
+              <option value="avg_complexity">Avg Complexity Score</option>
+              <option value="max_complexity">Max Complexity Score</option>
+              <option value="complexity_std">Complexity Variability</option>
+              <option value="vehicle_count">Avg Vehicles / Frame</option>
+              <option value="pedestrian_count">Avg Pedestrians / Frame</option>
+              <option value="cyclist_count">Avg Cyclists / Frame</option>
+              <option value="actor_density">Total Actor Density</option>
+              <option value="close_object_count">Close-Range Objects (&lt;10 m)</option>
+              <option value="avg_object_distance">Avg Object Distance (m)</option>
+              <option value="avg_object_size">Avg Object Size (m³)</option>
+              <option value="lidar_density">LiDAR Points / Object</option>
+              <option value="num_unique_categories">Category Diversity</option>
+            </select>
+          </div>
+          <button id="graphBtn" class="btn-primary graph-btn">Generate</button>
         </div>
-      </div>
-    </section>
+
+        <div class="graph-container">
+          <canvas id="graphCanvas" hidden></canvas>
+          <div id="graphPlaceholder" class="placeholder-text">
+            <div class="placeholder-icon small">📊</div>
+            Run <code>extract_data.py</code> once to generate graph data from all scenarios,
+            or render a scenario first.
+          </div>
+        </div>
+      </section>
+
+    </div>
 
   </main>
 

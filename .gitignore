@@ -5,6 +5,10 @@ train/
 # Generated outputs
 *.csv
 *.db
+static/output/
+
+# Claude Code worktrees
+.claude/
 
 # Python cache
 __pycache__/
