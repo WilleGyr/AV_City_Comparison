@@ -341,7 +341,6 @@ The app runs on `:5001` by default. To use `:5000`, disable AirPlay Receiver in
 - [**OpenCV**](https://opencv.org/), [**imageio**](https://imageio.readthedocs.io/) and [**ffmpeg**](https://ffmpeg.org/) — for the image and video pipeline.
 - [**Matplotlib**](https://matplotlib.org/) — for the server-rendered comparison charts.
 - [**Flask**](https://flask.palletsprojects.com/) — for keeping the backend small.
-- [**shields.io**](https://shields.io/) — badges above.
 
 > This project uses the Argoverse 2 dataset under its [terms of use](https://www.argoverse.org/about.html#terms-of-use) and is not affiliated with or endorsed by Argo AI.
 
