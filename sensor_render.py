@@ -576,7 +576,7 @@ def resolve_file(log_dir: Path, names: List[str]) -> Path:
     raise FileNotFoundError(f"Could not find any of these files in {log_dir}: {names}")
 
 
-def main(log_dir: Path, camera_name: str, output_video: Path, output_json: Path, font_scale: float = 0.45, skip_labels: bool = True) -> bool:
+def main(log_dir: Path, camera_name: str, output_video: Path, output_json: Path, font_scale: float = 0.45, skip_labels: bool = False) -> bool:
     max_delta_ns = 60 * 1e6 # Max timestamp mismatch for annotation/image pairing converted to ns
 
     annotations_path = resolve_file(log_dir, ["annotations.feather"])

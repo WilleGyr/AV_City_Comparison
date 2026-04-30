@@ -4,8 +4,6 @@
 const logSelect        = document.getElementById("logSelect");
 const cameraSelect     = document.getElementById("cameraSelect");
 const renderBtn        = document.getElementById("renderBtn");
-const playBtn          = document.getElementById("playBtn");
-const stopBtn          = document.getElementById("stopBtn");
 const videoPlayer      = document.getElementById("videoPlayer");
 const videoPlaceholder = document.getElementById("videoPlaceholder");
 const renderProgress   = document.getElementById("renderProgress");
@@ -123,10 +121,6 @@ renderBtn.addEventListener("click", () => {
     appendLog("✗ Connection lost.");
   };
 });
-
-// ── Video controls ─────────────────────────────────────────────────────────
-playBtn.addEventListener("click", () => { if (videoPlayer.src) videoPlayer.play(); });
-stopBtn.addEventListener("click", () => { videoPlayer.pause(); videoPlayer.currentTime = 0; });
 
 // ── Stats ──────────────────────────────────────────────────────────────────
 function fmt(val, decimals = 2) {
