@@ -10,27 +10,9 @@
 </p>
 
 <p>
-  <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white"/></a>
-  <a href="https://flask.palletsprojects.com/"><img alt="Flask" src="https://img.shields.io/badge/Flask-3-000000?style=for-the-badge&logo=flask&logoColor=white"/></a>
-  <a href="https://opencv.org/"><img alt="OpenCV" src="https://img.shields.io/badge/OpenCV-4-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white"/></a>
-  <a href="https://numpy.org/"><img alt="NumPy" src="https://img.shields.io/badge/NumPy-2-013243?style=for-the-badge&logo=numpy&logoColor=white"/></a>
-  <a href="https://pandas.pydata.org/"><img alt="pandas" src="https://img.shields.io/badge/pandas-3-150458?style=for-the-badge&logo=pandas&logoColor=white"/></a>
-</p>
-
-<p>
-  <img alt="License" src="https://img.shields.io/badge/License-MIT-f5f5f7?style=flat-square"/>
-  <img alt="Platform" src="https://img.shields.io/badge/platform-local-0a0a0b?style=flat-square"/>
-  <img alt="Render" src="https://img.shields.io/badge/render-ffmpeg-22c55e?style=flat-square"/>
-  <img alt="Data" src="https://img.shields.io/badge/data-Argoverse_2-111113?style=flat-square"/>
-  <img alt="Status" src="https://img.shields.io/badge/status-alpha-f59e0b?style=flat-square"/>
-</p>
-
-<p>
   <a href="#overview">Overview</a> ·
   <a href="#quick-start">Quick Start</a> ·
-  <a href="#features">Features</a> ·
   <a href="#how-it-works">How It Works</a> ·
-  <a href="#data-sources">Data Sources</a> ·
   <a href="#license">License</a>
 </p>
 
@@ -75,19 +57,6 @@ serves a single-page UI.
 
 ---
 
-## Features
-
-| | |
-|---|---|
-| **Annotated video render** | Pick a log + camera, get an MP4 with 3D box outlines and per-actor labels overlaid on the original frames. |
-| **Per-frame complexity score** | Each frame is scored from category weights, distance falloff, object size, and LiDAR density. |
-| **Bulk dataset scan** | `extract_data.py` walks every log, computes 13+ metrics per scenario, writes one `scenario_data.json`. |
-| **City + time-of-day binning** | Logs are grouped by AV2 city code (PIT, MIA, ATX, …) and local time bucket (Dawn, Morning, Afternoon, Evening, Night). |
-| **Graph builder** | Pick any X (city / time of day) and Y (complexity, vehicles, peds, density, LiDAR…) — get a server-rendered Matplotlib bar chart. |
-| **Live render log** | Render runs as a subprocess and streams stdout to the UI over Server-Sent Events. |
-| **No env, just Python** | One Flask process. Static frontend. Reads local `.feather` files directly. |
-| **Theme** | Minimal dark UI, indigo accent, tabular numerics for stats. |
-
 ---
 
 ## Quick Start
@@ -112,47 +81,6 @@ python app.py
 Open <http://127.0.0.1:5001> and pick a log.
 
 > macOS note: port 5000 is hijacked by AirPlay Receiver. The app uses `:5001` by default.
-
----
-
-## Data Sources
-
-You need one thing: a local copy of an Argoverse 2 Sensor Dataset split.
-
-<table>
-<tr>
-  <th>Source</th>
-  <th>How to get it</th>
-  <th>Env var</th>
-</tr>
-<tr>
-  <td><b>Argoverse 2 Sensor</b></td>
-  <td>
-
-  <a href="https://www.argoverse.org/av2.html#download-link">argoverse.org/av2</a> →
-  download the <em>sensor</em> dataset (any split: <code>train-000</code>, <code>val</code>, etc.) → unzip anywhere
-
-  </td>
-  <td><code>AV2_TRAIN_DIR</code></td>
-</tr>
-</table>
-
-The pipeline expects each log directory to contain at minimum:
-
-```
-<log_id>/
-├── annotations.feather                     # 3D cuboids in ego frame
-├── city_SE3_egovehicle.feather             # ego pose per timestamp
-├── calibration/
-│   ├── intrinsics.feather                  # camera intrinsics
-│   └── egovehicle_SE3_sensor.feather       # camera extrinsics
-└── sensors/cameras/<camera_name>/*.jpg     # image stream
-```
-
-`extract_data.py` only needs `annotations.feather`. The video renderer needs all of the
-above for the chosen camera.
-
-The `train/` directory is git-ignored — your dataset never gets committed.
 
 ---
 
@@ -181,34 +109,10 @@ frame_score = Σ actor_score   (over every cuboid visible at that timestamp)
 Tweak the weights, re-run the bulk extractor, and the graph builder picks up the new
 numbers immediately.
 
-### Render pipeline — one log → one MP4
-
-```mermaid
-flowchart LR
-  A[AV2 log dir] --> B[Load feather:<br/>annotations + calibration + poses]
-  B --> C[For each timestamp:<br/>match image + cuboids]
-  C --> D[Project 3D cuboids → 2D pixels]
-  D --> E[Draw boxes + labels<br/>+ score frame]
-  E --> F[(video.mp4)]
-  E --> G[(summary.json)]
-```
-
 [`sensor_render.py`](sensor_render.py) loads the feather files for one log, walks each
 timestamp, projects every 3D cuboid into the chosen camera using the intrinsics +
 ego→sensor extrinsics, draws the 8 box edges plus a short label, scores the frame, and
 streams everything to disk via `imageio[ffmpeg]`.
-
-### Compare pipeline — every log → one chart
-
-```mermaid
-flowchart LR
-  A[AV2 train dir] --> B[Walk every log]
-  B --> C[Load annotations only<br/>no images, no projection]
-  C --> D[Aggregate per-log metrics<br/>+ city + time of day bin]
-  D --> E[(scenario_data.json)]
-  E --> F[Flask /api/graph]
-  F --> G[Matplotlib bar chart]
-```
 
 [`extract_data.py`](extract_data.py) skips the image and projection work — it only needs
 `annotations.feather` to score frames — and writes one row per log to
