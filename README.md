@@ -181,16 +181,6 @@ falls back to whatever logs you've already rendered.
 
 ---
 
-## Scripts
-
-| Command | What it does |
-|---|---|
-| `python app.py` | Start the Flask app on `:5001`. |
-| `python extract_data.py` | Walk every log in `$AV2_TRAIN_DIR` and write `static/data/scenario_data.json`. |
-| `python sensor_render.py --log-dir <path> --camera ring_front_center --output-video out.mp4 --output-json out.json` | Render one log directly from the CLI. |
-
----
-
 ## License
 
 See the [MIT](LICENSE) file for details
