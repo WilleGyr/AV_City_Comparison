@@ -129,9 +129,8 @@ placeholder
 
 ### Adjusting the complexity score
 The complexity score is calculated in the `actore_score` function in [`sensor_render.py`](sensor_render.py)
-Adjusting the weights 
 
-## Changing line colors
+### Changing line colors
 Changing the line colors of the outlines for each actor category can be done by changing the `LINE_COLORS` dictionary in [`sensor_render.py`](sensor_render.py)
 
 ---
