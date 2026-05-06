@@ -9,13 +9,6 @@
   A local web app that renders annotated camera videos and compares driving difficulty across cities.
 </p>
 
-<p>
-  <a href="#overview">Overview</a> ·
-  <a href="#quick-start">Quick Start</a> ·
-  <a href="#how-it-works">How It Works</a> ·
-  <a href="#license">License</a>
-</p>
-
 </div>
 
 ---
@@ -164,7 +157,7 @@ Changing the line colors of the outlines for each actor category can be done by 
 **Frontend**
 - Vanilla HTML / CSS / JS (no build step)
 - Server-Sent Events for live render log
-- Single `style.css` — minimal dark theme, indigo accent
+- Single `style.css` for web app theme
 
 </td>
 </tr>
