@@ -61,7 +61,7 @@ serves a single-page UI.
 
 ## Quick Start
 
-> Download and unzip one or more of the train parts in the sensor dataset in Argoverse.com/av2.html
+Download and unzip one or more of the train parts in the sensor dataset from [Argoverse 2](https://www.argoverse.org/av2.html).
 
 ```bash
 # 1. Install Python deps
@@ -116,6 +116,23 @@ streams everything to disk via `imageio[ffmpeg]`.
 ([`app.py`](app.py)) serves the SPA, streams render subprocess output as Server-Sent
 Events, and renders comparison graphs on demand. If `scenario_data.json` is missing it
 falls back to whatever logs you've already rendered.
+
+---
+
+## Application instructions
+
+placeholder
+
+---
+
+## Personal usage and modification
+
+### Adjusting the complexity score
+The complexity score is calculated in the `actore_score` function in [`sensor_render.py`](sensor_render.py)
+Adjusting the weights 
+
+## Changing line colors
+Changing the line colors of the outlines for each actor category can be done by changing the `LINE_COLORS` dictionary in [`sensor_render.py`](sensor_render.py)
 
 ---
 
