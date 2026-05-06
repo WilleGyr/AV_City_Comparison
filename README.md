@@ -56,7 +56,7 @@ Open <http://127.0.0.1:5001> and pick a log.
 
 ## How It Works
 
-Two pipelines feed one Flask app — a **per-log render** that produces an annotated MP4,
+Two pipelines feed one Flask app, a **per-log render** that produces an annotated MP4,
 and a **bulk extractor** that aggregates every log into a single comparison dataset.
 
 ### The complexity score
@@ -128,6 +128,9 @@ The `row` variable contains the annotation/cuboid part for an actor in a frame. 
 | `ty_m` | Y position of the cuboid center in the ego-vehicle coordinate frame, in meters. |
 | `tz_m` | Z position of the cuboid center in the ego-vehicle coordinate frame, in meters. |
 | `num_interior_pts` | Number of LiDAR points inside the cuboid, if available. Defaults to `0` in the script if missing. |
+
+### Turning actor labels on/off
+There is currently no in-app way to change between viewing actor labels or not. Setting the if-statement in [`sensor_render.py`](sensor_render.py) at line 708 to `if True:` will turn them on.
 
 ### Changing line colors
 Changing the line colors of the outlines for each actor category can be done by changing the values in the `LINE_COLORS` dictionary in [`sensor_render.py`](sensor_render.py)
