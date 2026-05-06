@@ -119,9 +119,18 @@ falls back to whatever logs you've already rendered.
 
 ---
 
-## Application instructions
+## Application Instructions
 
-placeholder
+1. **Pick a log and camera** from the dropdowns on the left.
+2. **Click ▶ Render.** Watch the live log; when it finishes, the annotated
+   video plays and the Statistics panel fills in (city, frame counts, avg /
+   max / min complexity, vehicles, pedestrians).
+3. **Build a graph.** In the Graph Builder, choose an X axis (City or Time of
+   Day) and a Y axis (complexity, actor counts, distance, etc.) and click
+   **Generate** to compare across the dataset.
+
+> The graph uses `static/data/scenario_data.json` if present, otherwise only
+> the logs you've rendered. Run `python extract_data.py` once for the full view.
 
 ---
 
