@@ -22,17 +22,11 @@
 
 ## Overview
 
-**AV City Comparison** is a local research tool for the [Argoverse 2 Sensor Dataset](https://www.argoverse.org/av2.html).
-Point it at a folder of AV2 logs and it will, for any chosen log, project the 3D cuboid
-annotations into a camera image, write an annotated MP4, and score every frame for scene
-complexity — number of actors, their categories, distances, sizes, and LiDAR density.
+**AV City Comparison** is a local research tool built for working with and analyzing scenarios from the Argoverse 2 Sensor Dataset. The tool can be pointed to a folder containing AV2 logs, and for a selected scenario it projects the 3D cuboid annotations onto the camera image, creates an annotated MP4 video, and calculates a scene-complexity score for every frame.
 
-A second pass (`extract_data.py`) walks every log in the dataset, computes the same
-metrics in bulk, and dumps a single `scenario_data.json` that powers a graph builder for
-city-vs-city or time-of-day-vs-complexity comparisons.
+**The complexity score** is based on several factors, such as the number of actors in the scene, their categories, distances from the ego vehicle, object sizes, and LiDAR density. This makes it possible to compare how complex different traffic situations are across scenarios.
 
-No cloud. No account. The app is a Flask server that talks to local `.feather` files and
-serves a single-page UI.
+We also use [extract_data.py](extract_data.py) to process the dataset in bulk. The script goes through all logs, extracts the relevant metrics, and saves them into a single [scenario_data.json](static/data/scenario_data.json) file. This JSON file is then used by the graph builder to create comparisons, for example between different cities, time of day, complexity scores, and actor counts such as cars or pedestrians. 
 
 <div align="center">
 
