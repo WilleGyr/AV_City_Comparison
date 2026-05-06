@@ -61,7 +61,7 @@ serves a single-page UI.
 
 ## Quick Start
 
-> AV City Comparison is local-first — it expects an unzipped Argoverse 2 sensor split
+> AV City Comparison expects an unzipped Argoverse 2 sensor folder
 > on disk and points to it via an env var.
 
 ```bash
@@ -80,7 +80,7 @@ python app.py
 
 Open <http://127.0.0.1:5001> and pick a log.
 
-> macOS note: port 5000 is hijacked by AirPlay Receiver. The app uses `:5001` by default.
+> macOS note: port 5000 is used by AirPlay Receiver. The app uses `:5001` by default.
 
 ---
 
@@ -91,11 +91,11 @@ and a **bulk extractor** that aggregates every log into a single comparison data
 
 ### The complexity score
 
-Every actor in every frame contributes to that frame's score. Frame totals are summed
+Every actor in a given frame contributes to that frame's score. Frame totals are summed
 from per-actor contributions:
 
 ```
-actor_score = category_weight × distance_falloff × volume_factor × lidar_density_factor
+actor_score = category_weight × (1 + distance_falloff × volume_factor × lidar_density_factor)
 frame_score = Σ actor_score   (over every cuboid visible at that timestamp)
 ```
 
@@ -105,9 +105,6 @@ frame_score = Σ actor_score   (over every cuboid visible at that timestamp)
 | `distance_falloff` | euclidean distance from ego in metres | Close actors dominate; far ones decay. |
 | `volume_factor` | `length × width × height` | Bigger boxes = more presence. |
 | `lidar_density_factor` | `num_interior_pts` per cuboid | High point counts mean the actor is well-resolved. |
-
-Tweak the weights, re-run the bulk extractor, and the graph builder picks up the new
-numbers immediately.
 
 [`sensor_render.py`](sensor_render.py) loads the feather files for one log, walks each
 timestamp, projects every 3D cuboid into the chosen camera using the intrinsics +
@@ -135,7 +132,7 @@ falls back to whatever logs you've already rendered.
 - [Matplotlib](https://matplotlib.org/) — graph rendering (`Agg` backend)
 
 </td>
-<td valign="top">
+<td valign="top">an unzipp
 
 **Data + render**
 - [NumPy](https://numpy.org/) / [pandas](https://pandas.pydata.org/) — feather + tabular ops
