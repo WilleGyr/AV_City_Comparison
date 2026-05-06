@@ -142,7 +142,7 @@ Changing the line colors of the outlines for each actor category can be done by 
 - [Matplotlib](https://matplotlib.org/) — graph rendering (`Agg` backend)
 
 </td>
-<td valign="top">an unzipp
+<td valign="top">
 
 **Data + render**
 - [NumPy](https://numpy.org/) / [pandas](https://pandas.pydata.org/) — feather + tabular ops
