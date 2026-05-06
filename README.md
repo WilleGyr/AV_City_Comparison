@@ -61,8 +61,7 @@ serves a single-page UI.
 
 ## Quick Start
 
-> AV City Comparison expects an unzipped Argoverse 2 sensor folder
-> on disk and points to it via an env var.
+> Download and unzip one or more of the train parts in the sensor dataset in Argoverse.com/av2.html
 
 ```bash
 # 1. Install Python deps
@@ -106,9 +105,9 @@ frame_score = Σ actor_score   (over every cuboid visible at that timestamp)
 | `volume_factor` | `length × width × height` | Bigger boxes = more presence. |
 | `lidar_density_factor` | `num_interior_pts` per cuboid | High point counts mean the actor is well-resolved. |
 
-[`sensor_render.py`](sensor_render.py) loads the feather files for one log, walks each
-timestamp, projects every 3D cuboid into the chosen camera using the intrinsics +
-ego→sensor extrinsics, draws the 8 box edges plus a short label, scores the frame, and
+[`sensor_render.py`](sensor_render.py) loads the feather files for a selected log, walks each
+timestamp, projects every 3D cuboid onto the chosen camera view using the intrinsics +
+ego→sensor extrinsics, draws the 8 box edges plus an optional label, scores the frame, and
 streams everything to disk via `imageio[ffmpeg]`.
 
 [`extract_data.py`](extract_data.py) skips the image and projection work — it only needs
