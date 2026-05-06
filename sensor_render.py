@@ -32,7 +32,7 @@ TRAIN_DIR: Path = Path(os.environ.get("AV2_TRAIN_DIR", str(_DEFAULT_TRAIN_DIR)))
 # 2. Reads calibration.feather and poses.feather.
 # 3. Reads images from one camera stream.
 # 4. Projects each 3D cuboid into the chosen camera image.
-# 5. Draws 3D box outlines and a short text label per actor.
+# 5. Draws 3D box outlines and an optional short text label per actor.
 # 6. Computes a real-time per-frame complexity score.
 # 7. Writes an annotated MP4 and a JSON summary with frame scores and average score.
 #
