@@ -7,9 +7,6 @@ train/
 *.db
 static/output/
 
-# Claude Code worktrees
-.claude/
-
 # Python cache
 __pycache__/
 *.pyc
