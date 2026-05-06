@@ -26,30 +26,7 @@
 
 **The complexity score** is based on several factors, such as the number of actors in the scene, their categories, distances from the ego vehicle, object sizes, and LiDAR density. This makes it possible to compare how complex different traffic situations are across scenarios.
 
-We also use [extract_data.py](extract_data.py) to process the dataset in bulk. The script goes through all logs, extracts the relevant metrics, and saves them into a single [scenario_data.json](static/data/scenario_data.json) file. This JSON file is then used by the graph builder to create comparisons, for example between different cities, time of day, complexity scores, and actor counts such as cars or pedestrians. 
-
-<div align="center">
-
-<table>
-<tr>
-<td align="center" width="33%">
-<h3>Project</h3>
-<sub>3D cuboids → camera frames via AV2 calibration + ego pose.</sub>
-</td>
-<td align="center" width="33%">
-<h3>Score</h3>
-<sub>Per-frame complexity from category, distance, size, density.</sub>
-</td>
-<td align="center" width="33%">
-<h3>Compare</h3>
-<sub>Bulk-extract every log → grouped bar charts per city / time of day.</sub>
-</td>
-</tr>
-</table>
-
-</div>
-
----
+We also use [`extract_data.py`](extract_data.py) to process the dataset in bulk. The script goes through all logs, extracts the relevant metrics, and saves them into a single [scenario_data.json](static/data/scenario_data.json) file. This JSON file is then used by the graph builder to create comparisons, for example between different cities, time of day, complexity scores, and actor counts such as cars or pedestrians. 
 
 ---
 
@@ -131,10 +108,29 @@ falls back to whatever logs you've already rendered.
 ## Personal usage and modification
 
 ### Adjusting the complexity score
-The complexity score is calculated in the `actore_score` function in [`sensor_render.py`](sensor_render.py)
+The complexity score and the weights are calculated in the `actore_score` function in [`sensor_render.py`](sensor_render.py) using the `row` argument. <br>
+
+The `row` variable contains the annotation/cuboid part for an actor in a frame. Changing or ignoring some/all weights can be done by editing how the function handles the `row` argument.
+
+| Field in `row` | What it contains |
+|---|---|
+| `timestamp_ns` | Timestamp of the annotation in nanoseconds. |
+| `track_uuid` | Unique track ID for the annotated object across frames. |
+| `category` | Object class, such as `REGULAR_VEHICLE`, `PEDESTRIAN`, `BUS`, or `CONSTRUCTION_CONE`. |
+| `length_m` | Length of the 3D cuboid in meters. |
+| `width_m` | Width of the 3D cuboid in meters. |
+| `height_m` | Height of the 3D cuboid in meters. |
+| `qw` | Quaternion `w` component of the cuboid orientation. |
+| `qx` | Quaternion `x` component of the cuboid orientation. |
+| `qy` | Quaternion `y` component of the cuboid orientation. |
+| `qz` | Quaternion `z` component of the cuboid orientation. |
+| `tx_m` | X position of the cuboid center in the ego-vehicle coordinate frame, in meters. |
+| `ty_m` | Y position of the cuboid center in the ego-vehicle coordinate frame, in meters. |
+| `tz_m` | Z position of the cuboid center in the ego-vehicle coordinate frame, in meters. |
+| `num_interior_pts` | Number of LiDAR points inside the cuboid, if available. Defaults to `0` in the script if missing. |
 
 ### Changing line colors
-Changing the line colors of the outlines for each actor category can be done by changing the `LINE_COLORS` dictionary in [`sensor_render.py`](sensor_render.py)
+Changing the line colors of the outlines for each actor category can be done by changing the values in the `LINE_COLORS` dictionary in [`sensor_render.py`](sensor_render.py)
 
 ---
 
